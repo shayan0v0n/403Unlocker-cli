@@ -73,7 +73,6 @@ Example:
 
 ## Flags
 - `--help`: Display help for any command.
-- `--verbose`: Enable verbose output for debugging.
 
 ---
 
@@ -93,7 +92,7 @@ Contributions are welcome! Feel free to open an issue or submit a pull request.
 ---
 
 ## License
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/403unlocker/403Unlocker-cli/blob/main/LICENSE) file for more information.
+This project is licensed under the GPL-3.0 License. See the [LICENSE](https://github.com/403unlocker/403Unlocker-cli/blob/main/LICENSE) file for more information.
 
 ---
 
