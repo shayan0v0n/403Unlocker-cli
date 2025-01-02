@@ -23,7 +23,16 @@ func Run() {
 				Usage: "Check some urls with provided DNS",
 			},
 		},
-		Action: CheckWithDNS,
+		Action: func(c *cli.Context) error {
+			if c.NumFlags() == 0 {
+				err := cli.ShowAppHelp(c)
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+			return CheckWithDNS(c)
+		},
 	}
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
