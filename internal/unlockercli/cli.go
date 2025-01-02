@@ -1,4 +1,4 @@
-package
+package unlockercli
 
 import (
 	"context"
@@ -14,17 +14,12 @@ import (
 
 func Run() {
 	app := &cli.App{
-		Name: "403unlocker-403cli",
+		Name: "403unlocker-cli",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "check",
-				Value: "https://proxy.golang.org/",
+				Value: "https://pkg.go.dev/",
 				Usage: "Check some urls with provided DNS",
-			},
-			&cli.StringFlag{
-				Name:  "dns",
-				Value: "8.8.8.8", // Default to Google DNS
-				Usage: "DNS server to use for resolution",
 			},
 		},
 		Action: CheckWithDNS,
@@ -46,17 +41,14 @@ func ChangeDNS(dns string) *http.Client {
 		},
 	}
 
-	// Use the resolver in a custom dialer
 	customDialer := &net.Dialer{
 		Resolver: customResolver,
 	}
 
-	// Create HTTP transport with custom dialer
 	transport := &http.Transport{
 		DialContext: customDialer.DialContext,
 	}
 
-	// Create HTTP client with custom transport
 	client := &http.Client{
 		Transport: transport,
 	}
@@ -65,34 +57,50 @@ func ChangeDNS(dns string) *http.Client {
 
 func CheckWithDNS(c *cli.Context) error {
 	url := c.String("check")
-	dns := c.String("dns")
 
-	client := ChangeDNS(dns)
+	dnsList, err := ReadDNSFromFile("config/dns.conf")
 
-	// Extract the hostname from the URL
-	hostname := strings.TrimPrefix(url, "https://")
-	hostname = strings.TrimPrefix(hostname, "http://")
-	hostname = strings.Split(hostname, "/")[0]
-
-	// Step 1: Verify DNS resolution
-	startTime := time.Now()
-	ips, err := net.LookupIP(hostname)
 	if err != nil {
-		return fmt.Errorf("failed to resolve hostname: %v", err)
+		fmt.Println(err)
 	}
-	resolutionTime := time.Since(startTime)
 
-	log.Printf("Resolved IPs for %s: %v\n", hostname, ips)
-	log.Printf("DNS resolution took: %v\n", resolutionTime)
+	for _, dns := range dnsList {
 
-	// Step 2: Verify HTTP request
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("failed to fetch URL: %v", err)
+		client := ChangeDNS(dns)
+
+		hostname := strings.TrimPrefix(url, "https://")
+		hostname = strings.TrimPrefix(hostname, "http://")
+		hostname = strings.Split(hostname, "/")[0]
+
+		startTime := time.Now()
+		ips, err := net.LookupIP(hostname)
+		if err != nil {
+			continue
+			//return fmt.Errorf("failed to resolve hostname: %v", err)
+		}
+		resolutionTime := time.Since(startTime)
+
+		log.Printf("Resolved IPs for %s: %v\n", hostname, ips)
+		log.Printf("DNS resolution took: %v\n", resolutionTime)
+
+		resp, err := client.Get(url)
+		if err != nil {
+			continue
+			//return fmt.Errorf("failed to fetch URL: %v", err)
+		}
+		defer resp.Body.Close()
+
+		log.Printf("Response status for %s: %s\n", url, resp.Status)
 	}
-	defer resp.Body.Close()
-
-	log.Printf("Response status for %s: %s\n", url, resp.Status)
-
 	return nil
+}
+
+func ReadDNSFromFile(filename string) ([]string, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	dnsServers := strings.Fields(string(data))
+	return dnsServers, nil
 }
