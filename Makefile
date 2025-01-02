@@ -1,7 +1,7 @@
 
 OUTPUT = 403unlocker
 MAIN = cmd/403unlockercli/main.go
-BIN_DIR = /usr/local/bin
+BIN_DIR = ~/.local/bin
 
 .DEFAULT_GOAL := help
 
