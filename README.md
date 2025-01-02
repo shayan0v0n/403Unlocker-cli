@@ -39,23 +39,23 @@
 #### 1. Check
 Test if a URL can be resolved using a custom DNS server.
 ```
-403unlocker check --url <URL>
+403unlocker check <URL>
 ```
 Example:
 ```
-403unlocker check --url https://pkg.go.dev
+403unlocker check "https://pkg.go.dev"
 ```
 
 #### 2. DNS
-Find the fastest DNS server among a list of custom DNS options.
+Find the fastest DNS sni-proxy among a list of DNS options.
 ```
-403unlocker dns
+403unlocker dns "https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm"
 ```
 
 #### 3. Docker
 Identify the best Docker image proxy for bypassing network restrictions.
 ```
-403unlocker docker
+403unlocker docker "gitlab/gitlab-ce:17.0.0-ce.0"
 ```
 
 
@@ -69,7 +69,6 @@ Identify the best Docker image proxy for bypassing network restrictions.
 
 ## Requirements
 - Go 1.18 or higher
-- Docker (for the Docker subcommand)
 
 ---
 
