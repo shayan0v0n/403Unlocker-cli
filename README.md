@@ -49,11 +49,21 @@ Example:
 #### 2. DNS
 Find the fastest DNS sni-proxy among a list of DNS options.
 ```
+403unlocker dns <URL>
+```
+
+Example:
+```
 403unlocker dns "https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm"
 ```
 
 #### 3. Docker
 Identify the best Docker image proxy for bypassing network restrictions.
+```
+403unlocker docker <DOCKER-IMAGE>
+```
+
+Example:
 ```
 403unlocker docker "gitlab/gitlab-ce:17.0.0-ce.0"
 ```
