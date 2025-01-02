@@ -3,13 +3,14 @@ package unlockercli
 import (
 	"context"
 	"fmt"
-	"github.com/urfave/cli/v2"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/urfave/cli/v2"
 )
 
 func Run() {
