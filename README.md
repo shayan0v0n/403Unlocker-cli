@@ -16,22 +16,22 @@
    git clone https://github.com/403unlocker/403Unlocker-cli.git
    cd 403Unlocker-cli
    ```
-2. Build the project:
+2. Install the project:
    ```bash
-   make build
-   ```
-3. Run the project:
-   ```bash
-   ./403unlocker --help
+   make install
    ```
 
+3. Run the project:
+   ```bash
+   403unlocker --help
+   ```
 ---
 
 ## Usage
 
 ### General Syntax
 ```
-./403unlocker <command> [flags]
+403unlocker <command> [flags]
 ```
 
 ### Commands
@@ -39,23 +39,23 @@
 #### 1. Check
 Test if a URL can be resolved using a custom DNS server.
 ```
-./403unlocker check --url <URL>
+403unlocker check --url <URL>
 ```
 Example:
 ```
-./403unlocker check --url https://pkg.go.dev
+403unlocker check --url https://pkg.go.dev
 ```
 
 #### 2. DNS
 Find the fastest DNS server among a list of custom DNS options.
 ```
-./403unlocker dns
+403unlocker dns
 ```
 
 #### 3. Docker
 Identify the best Docker image proxy for bypassing network restrictions.
 ```
-./403unlocker docker
+403unlocker docker
 ```
 
 
