@@ -2,10 +2,14 @@
 
 403Unlocker-CLI is a versatile command-line tool designed to bypass 403 restrictions effectively. It provides subcommands to handle DNS resolution, DNS server selection, and Docker image proxy discovery.
 
+
 ## Features
-- **Check**: Test if a specific URL can be resolved using a custom DNS server.
-- **DNS**: Find the most responsive DNS server from a list of custom DNS options.
-- **Docker**: Identify the best Docker image proxy to bypass network restrictions.
+- **Check**: Checks if the DNS SNI-Proxy can bypass 403 error for an specific domain.
+- **Docker**: Finds the fastest docker registries for an specific docker image.
+- **DNS**: Finds the fastest DNS SNI-Proxy for downloading an specific URL.
+
+![Untitled-2024-09-09-1944](https://github.com/user-attachments/assets/611f7495-480d-4f33-aef7-4674de331751)
+
 
 ---
 
