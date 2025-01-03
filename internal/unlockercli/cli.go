@@ -16,23 +16,48 @@ import (
 
 func Run() {
 	app := &cli.App{
-		Name: "403unlocker-cli",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "check",
-				Value: "https://pkg.go.dev/",
-				Usage: "Check some urls with provided DNS",
+		EnableBashCompletion: true,
+		Name:                 "403unlocker",
+		Usage:                "403Unlocker-CLI is a versatile command-line tool designed to bypass 403 restrictions effectively",
+		Commands: []*cli.Command{
+			{
+				Name:    "check",
+				Aliases: []string{"c"},
+				Usage:   "Checks if the DNS SNI-Proxy can bypass 403 error for an specific domain",
+				Action: func(cCtx *cli.Context) error {
+					if URLValidator(cCtx.Args().First()) {
+						return CheckWithDNS(cCtx)
+					} else {
+						fmt.Println("need a valid domain		example: https://pkg.go.dev")
+					}
+					return nil
+				},
 			},
-		},
-		Action: func(c *cli.Context) error {
-			if c.NumFlags() == 0 {
-				err := cli.ShowAppHelp(c)
-				if err != nil {
-					return err
-				}
-				return nil
-			}
-			return CheckWithDNS(c)
+			{
+				Name:    "docker",
+				Aliases: []string{"d"},
+				Usage:   "Finds the fastest docker registries for an specific docker image",
+				Action: func(cCtx *cli.Context) error {
+					if DockerImageValidator(cCtx.Args().First()) {
+						return CheckWithDockerImage(cCtx)
+					} else {
+						fmt.Println("need a valid docker image		example: gitlab/gitlab-ce:17.0.0-ce.0")
+					}
+					return nil
+				},
+			},
+			{
+				Name:  "dns",
+				Usage: "Finds the fastest DNS SNI-Proxy for downloading an specific URL",
+				Action: func(cCtx *cli.Context) error {
+					if URLValidator(cCtx.Args().First()) {
+						return CheckWithURL(cCtx)
+					} else {
+						fmt.Println("need a valid URL		example: \"https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm\"")
+					}
+					return nil
+				},
+			},
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
@@ -42,7 +67,6 @@ func Run() {
 
 func ChangeDNS(dns string) *http.Client {
 	dialer := &net.Dialer{}
-
 	customResolver := &net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
@@ -51,15 +75,12 @@ func ChangeDNS(dns string) *http.Client {
 			return dialer.DialContext(ctx, "udp", dnsServer)
 		},
 	}
-
 	customDialer := &net.Dialer{
 		Resolver: customResolver,
 	}
-
 	transport := &http.Transport{
 		DialContext: customDialer.DialContext,
 	}
-
 	client := &http.Client{
 		Transport: transport,
 	}
@@ -67,8 +88,7 @@ func ChangeDNS(dns string) *http.Client {
 }
 
 func CheckWithDNS(c *cli.Context) error {
-	url := c.String("check")
-
+	url := c.Args().First()
 	dnsList, err := ReadDNSFromFile("config/dns.conf")
 	if err != nil {
 		fmt.Println(err)
@@ -118,7 +138,23 @@ func ReadDNSFromFile(filename string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	dnsServers := strings.Fields(string(data))
 	return dnsServers, nil
+}
+
+// ################### need to be completed ########################
+func URLValidator(URL string) bool {
+	return false
+}
+
+func DockerImageValidator(URL string) bool {
+	return false
+}
+
+func CheckWithURL(c *cli.Context) error {
+	return nil
+}
+
+func CheckWithDockerImage(c *cli.Context) error {
+	return nil
 }
