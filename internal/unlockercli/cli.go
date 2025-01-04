@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/urfave/cli/v2"
@@ -69,39 +70,46 @@ func CheckWithDNS(c *cli.Context) error {
 	url := c.String("check")
 
 	dnsList, err := ReadDNSFromFile("config/dns.conf")
-
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
 
+	var wg sync.WaitGroup
 	for _, dns := range dnsList {
+		wg.Add(1)
+		go func(dns string) {
+			defer wg.Done()
 
-		client := ChangeDNS(dns)
+			client := ChangeDNS(dns)
 
-		hostname := strings.TrimPrefix(url, "https://")
-		hostname = strings.TrimPrefix(hostname, "http://")
-		hostname = strings.Split(hostname, "/")[0]
+			hostname := strings.TrimPrefix(url, "https://")
+			hostname = strings.TrimPrefix(hostname, "http://")
+			hostname = strings.Split(hostname, "/")[0]
 
-		startTime := time.Now()
-		ips, err := net.LookupIP(hostname)
-		if err != nil {
-			continue
-			//return fmt.Errorf("failed to resolve hostname: %v", err)
-		}
-		resolutionTime := time.Since(startTime)
+			startTime := time.Now()
+			ips, err := net.LookupIP(hostname)
+			if err != nil {
+				log.Printf("Failed to resolve hostname %s with DNS %s: %v\n", hostname, dns, err)
+				return
+			}
+			resolutionTime := time.Since(startTime)
 
-		log.Printf("Resolved IPs for %s: %v\n", hostname, ips)
-		log.Printf("DNS resolution took: %v\n", resolutionTime)
+			log.Printf("Resolved IPs for %s: %v (DNS: %s)\n", hostname, ips, dns)
+			log.Printf("DNS resolution took: %v\n", resolutionTime)
 
-		resp, err := client.Get(url)
-		if err != nil {
-			continue
-			//return fmt.Errorf("failed to fetch URL: %v", err)
-		}
-		defer resp.Body.Close()
+			resp, err := client.Get(url)
+			if err != nil {
+				log.Printf("Failed to fetch URL %s with DNS %s: %v\n", url, dns, err)
+				return
+			}
+			defer resp.Body.Close()
 
-		log.Printf("Response status for %s: %s\n", url, resp.Status)
+			log.Printf("Response status for %s (DNS: %s): %s\n", url, dns, resp.Status)
+		}(dns)
 	}
+
+	wg.Wait()
 	return nil
 }
 
