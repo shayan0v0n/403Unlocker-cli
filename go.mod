@@ -10,6 +10,7 @@ require (
 )
 
 require (
+	github.com/cavaliergopher/grab/v3 v3.0.1 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
