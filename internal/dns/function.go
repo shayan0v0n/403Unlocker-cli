@@ -3,13 +3,14 @@ package dns
 import (
 	"context"
 	"fmt"
-	"github.com/cavaliergopher/grab/v3"
-	"github.com/salehborhani/403Unlocker-cli/internal/check"
-	"github.com/urfave/cli/v2"
 	"net/url"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/cavaliergopher/grab/v3"
+	"github.com/salehborhani/403Unlocker-cli/internal/check"
+	"github.com/urfave/cli/v2"
 )
 
 func URLValidator(URL string) bool {
