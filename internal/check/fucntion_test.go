@@ -13,13 +13,18 @@ func TestDomainValidator(t *testing.T) {
 		expected bool
 	}{
 		{
+			name:     "Valid URL",
+			domain:   "https://pkg.go.dev",
+			expected: true,
+		},
+		{
 			name:     "Valid domain",
-			domain:   "example.com",
+			domain:   "http://example.com",
 			expected: true,
 		},
 		{
 			name:     "Valid subdomain",
-			domain:   "sub.example.com",
+			domain:   "https://sub.example.com",
 			expected: true,
 		},
 		{
@@ -44,7 +49,7 @@ func TestDomainValidator(t *testing.T) {
 		},
 		{
 			name:     "Valid domain with hyphens",
-			domain:   "valid-domain.org",
+			domain:   "https://valid-domain.org",
 			expected: true,
 		},
 		{
@@ -60,6 +65,11 @@ func TestDomainValidator(t *testing.T) {
 		{
 			name:     "Invalid domain - ends with dot",
 			domain:   "invalid.",
+			expected: false,
+		},
+		{
+			name:     "Invalid domain without scheme",
+			domain:   "pkg.go.dev",
 			expected: false,
 		},
 	}

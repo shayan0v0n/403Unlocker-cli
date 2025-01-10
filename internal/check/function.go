@@ -45,6 +45,9 @@ func CheckWithDNS(c *cli.Context) error {
 		return err
 	}
 
+	dnsResolution := make(map[string]time.Duration)
+	var mutex sync.Mutex
+
 	var wg sync.WaitGroup
 	for _, dns := range dnsList {
 		wg.Add(1)
@@ -73,13 +76,33 @@ func CheckWithDNS(c *cli.Context) error {
 				log.Printf("Failed to fetch URL %s with DNS %s: %v\n", url, dns, err)
 				return
 			}
+			// Store the time which has been taken to resolve
+
+			mutex.Lock()
+			dnsResolution[dns] += resolutionTime // Use BytesComplete() for partial downloads
+			mutex.Unlock()
+
 			defer resp.Body.Close()
 
 			log.Printf("Response status for %s (DNS: %s): %s\n", url, dns, resp.Status)
 		}(dns)
 	}
-
 	wg.Wait()
+
+	var dns string
+	var minTime time.Duration = 1<<63 - 1
+	for d, t := range dnsResolution {
+		if t < minTime {
+			dns = d
+			minTime = t
+		}
+	}
+
+	if dns != "" {
+		fmt.Printf("DNS %s resolved faster: %s \n", dns, minTime)
+	} else {
+		fmt.Println("No DNS server was able to download any data.")
+	}
 	return nil
 }
 
@@ -98,7 +121,7 @@ func DomainValidator(domain string) bool {
 	// - The domain contains only alphanumeric characters, hyphens, and dots.
 	// - It does not start or end with a hyphen or dot.
 	// - It has at least one dot.
-	domainRegex := `^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$`
+	domainRegex := `^(https?:\/\/)([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$`
 
 	// Match the domain against the regex
 	match, _ := regexp.MatchString(domainRegex, domain)
