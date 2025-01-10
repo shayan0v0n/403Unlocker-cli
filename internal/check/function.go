@@ -3,14 +3,12 @@ package check
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/urfave/cli/v2"
 )
@@ -44,8 +42,7 @@ func CheckWithDNS(c *cli.Context) error {
 		return err
 	}
 
-	dnsResolution := make(map[string]time.Duration)
-	var mutex sync.Mutex
+	url = ensureHTTPS(url)
 
 	var wg sync.WaitGroup
 	for _, dns := range dnsList {
@@ -55,26 +52,10 @@ func CheckWithDNS(c *cli.Context) error {
 
 			client := ChangeDNS(dns)
 
-			hostname := strings.TrimPrefix(url, "https://")
-			hostname = strings.TrimPrefix(hostname, "http://")
-			hostname = strings.Split(hostname, "/")[0]
-
-			startTime := time.Now()
-			_, err := net.LookupIP(hostname)
-			if err != nil {
-				log.Printf("Failed to resolve hostname %s with DNS %s: %v\n", hostname, dns, err)
-				return
-			}
-			resolutionTime := time.Since(startTime)
 			resp, err := client.Get(url)
 			if err != nil {
 				return
 			}
-			// Store the time which has been taken to resolve
-
-			mutex.Lock()
-			dnsResolution[dns] += resolutionTime // Use BytesComplete() for partial downloads
-			mutex.Unlock()
 
 			defer resp.Body.Close()
 			code := strings.Split(resp.Status, " ")
@@ -99,7 +80,7 @@ func DomainValidator(domain string) bool {
 	// - The domain contains only alphanumeric characters, hyphens, and dots.
 	// - It does not start or end with a hyphen or dot.
 	// - It has at least one dot.
-	domainRegex := `^(https?:\/\/)([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}\/.*$`
+	domainRegex := `^(http[s]?:\/\/)?([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}).*?$`
 	// Match the domain against the regex
 	match, _ := regexp.MatchString(domainRegex, domain)
 	if !match {
@@ -120,4 +101,32 @@ func DomainValidator(domain string) bool {
 	}
 
 	return true
+}
+
+func ensureHTTPS(url string) string {
+	// Regex to check if the URL starts with https://
+	regex := `^(https)://`
+	re, err := regexp.Compile(regex)
+	if err != nil {
+		fmt.Println("Error compiling regex:", err)
+		return url
+	}
+	regexHTTP := `^(http)://`
+
+	reHTTP, err := regexp.Compile(regexHTTP)
+	if err != nil {
+		fmt.Println("Error compiling regex:", err)
+		return url
+	}
+
+	if reHTTP.MatchString(url) {
+		url = strings.TrimPrefix(url, "http://")
+	}
+
+	// If the URL doesn't start with http:// or https://, prepend https://
+	if !re.MatchString(url) {
+		url = "https://" + url
+	}
+
+	return url
 }

@@ -70,7 +70,7 @@ func TestDomainValidator(t *testing.T) {
 		{
 			name:     "Invalid domain without scheme",
 			domain:   "pkg.go.dev",
-			expected: false,
+			expected: true,
 		},
 	}
 
