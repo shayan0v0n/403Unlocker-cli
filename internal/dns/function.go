@@ -83,6 +83,6 @@ func CheckWithURL(c *cli.Context) error {
 	} else {
 		fmt.Println("No DNS server was able to download any data.")
 	}
-
+	os.RemoveAll(fmt.Sprintf("/tmp/%v", tempDir))
 	return nil
 }
