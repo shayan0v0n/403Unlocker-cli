@@ -31,6 +31,8 @@ func URLValidator(URL string) bool {
 
 func CheckWithURL(c *cli.Context) error {
 	fileToDownload := c.Args().First()
+	timeout := c.Int("timeout")
+
 	dnsList, err := check.ReadDNSFromFile("config/dns.conf")
 	if err != nil {
 		fmt.Println("Error reading DNS list:", err)
@@ -39,10 +41,14 @@ func CheckWithURL(c *cli.Context) error {
 
 	// Map to store the total size downloaded by each DNS
 	dnsSizeMap := make(map[string]int64)
-	// Create a context with a timeout of 15 seconds
+
+	fmt.Println("Timeout:", timeout)
+	fmt.Println("URL: ", fileToDownload)
+
+	tempDir := time.Now().UnixMilli()
 
 	for _, dns := range dnsList {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 		defer cancel()
 		// Create a custom HTTP client with the specified DNS
 		clientWithCustomDNS := check.ChangeDNS(dns)
@@ -50,7 +56,7 @@ func CheckWithURL(c *cli.Context) error {
 		client.HTTPClient = clientWithCustomDNS
 
 		// Create a new download request
-		req, err := grab.NewRequest(".", fileToDownload)
+		req, err := grab.NewRequest(fmt.Sprintf("/tmp/%v", tempDir), fileToDownload)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating request for DNS %s: %v\n", dns, err)
 		}

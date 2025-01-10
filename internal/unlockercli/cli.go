@@ -34,6 +34,14 @@ func Run() {
 				Name:    "docker",
 				Aliases: []string{"d"},
 				Usage:   "Finds the fastest docker registries for an specific docker image",
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:    "timeout",
+						Usage:   "Sets timeout",
+						Value:   10,
+						Aliases: []string{"t"},
+					},
+				},
 				Action: func(cCtx *cli.Context) error {
 					if docker.DockerImageValidator(cCtx.Args().First()) {
 						return docker.CheckWithDockerImage(cCtx)
@@ -46,6 +54,14 @@ func Run() {
 			{
 				Name:  "dns",
 				Usage: "Finds the fastest DNS SNI-Proxy for downloading an specific URL",
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:    "timeout",
+						Usage:   "Sets timeout",
+						Value:   10,
+						Aliases: []string{"t"},
+					},
+				},
 				Action: func(cCtx *cli.Context) error {
 					if dns.URLValidator(cCtx.Args().First()) {
 						return dns.CheckWithURL(cCtx)
