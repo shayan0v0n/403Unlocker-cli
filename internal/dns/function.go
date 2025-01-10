@@ -55,18 +55,11 @@ func CheckWithURL(c *cli.Context) error {
 			fmt.Fprintf(os.Stderr, "Error creating request for DNS %s: %v\n", dns, err)
 		}
 		req = req.WithContext(ctx)
-
 		// Start the download
 		resp := client.Do(req)
-		// if err := resp.Err(); err != nil {
-
-		// 	// fmt.Fprintf(os.Stderr, "Download failed for DNS %s: %v\n", dns, err)
-		// }
-
 		// Update the total size downloaded by this DNS
 		dnsSizeMap[dns] += resp.BytesComplete() // Use BytesComplete() for partial downloads
-
-		fmt.Printf("Downloaded %d KB using DNS %s\n", resp.BytesComplete()/8_000, dns)
+		fmt.Printf("Downloaded %d KB using DNS %s\n", resp.BytesComplete()/1_000, dns)
 
 	}
 
@@ -80,7 +73,7 @@ func CheckWithURL(c *cli.Context) error {
 		}
 	}
 	if maxDNS != "" {
-		fmt.Printf("DNS %s downloaded the most data: %d KB\n", maxDNS, maxSize/8_000)
+		fmt.Printf("%s downloaded the most data: %d KB\n", maxDNS, maxSize/1_000)
 	} else {
 		fmt.Println("No DNS server was able to download any data.")
 	}
