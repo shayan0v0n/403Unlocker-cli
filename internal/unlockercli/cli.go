@@ -31,8 +31,8 @@ func Run() {
 				},
 			},
 			{
-				Name:    "docker",
-				Aliases: []string{"d"},
+				Name:    "fastdocker",
+				Aliases: []string{"docker"},
 				Usage:   "Finds the fastest docker registries for an specific docker image",
 				Flags: []cli.Flag{
 					&cli.IntFlag{
@@ -52,8 +52,9 @@ func Run() {
 				},
 			},
 			{
-				Name:  "dns",
-				Usage: "Finds the fastest DNS SNI-Proxy for downloading an specific URL",
+				Name:    "bestdns",
+				Aliases: []string{"dns"},
+				Usage:   "Finds the fastest DNS SNI-Proxy for downloading an specific URL",
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:    "timeout",
