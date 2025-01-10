@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/cavaliergopher/grab/v3"
@@ -40,46 +39,36 @@ func CheckWithURL(c *cli.Context) error {
 
 	// Map to store the total size downloaded by each DNS
 	dnsSizeMap := make(map[string]int64)
-	var mutex sync.Mutex
-
 	// Create a context with a timeout of 15 seconds
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
 
-	var wg sync.WaitGroup
 	for _, dns := range dnsList {
-		wg.Add(1)
-		go func(dns string) {
-			defer wg.Done()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		// Create a custom HTTP client with the specified DNS
+		clientWithCustomDNS := check.ChangeDNS(dns)
+		client := grab.NewClient()
+		client.HTTPClient = clientWithCustomDNS
 
-			// Create a custom HTTP client with the specified DNS
-			clientWithCustomDNS := check.ChangeDNS(dns)
-			client := grab.NewClient()
-			client.HTTPClient = clientWithCustomDNS
+		// Create a new download request
+		req, err := grab.NewRequest(".", fileToDownload)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating request for DNS %s: %v\n", dns, err)
+		}
+		req = req.WithContext(ctx)
 
-			// Create a new download request
-			req, err := grab.NewRequest(".", fileToDownload)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error creating request for DNS %s: %v\n", dns, err)
-			}
-			req = req.WithContext(ctx)
+		// Start the download
+		resp := client.Do(req)
+		// if err := resp.Err(); err != nil {
 
-			// Start the download
-			resp := client.Do(req)
-			if err := resp.Err(); err != nil {
-				fmt.Fprintf(os.Stderr, "Download failed for DNS %s: %v\n", dns, err)
-			}
+		// 	// fmt.Fprintf(os.Stderr, "Download failed for DNS %s: %v\n", dns, err)
+		// }
 
-			// Update the total size downloaded by this DNS
-			mutex.Lock()
-			dnsSizeMap[dns] += resp.BytesComplete() // Use BytesComplete() for partial downloads
-			mutex.Unlock()
+		// Update the total size downloaded by this DNS
+		dnsSizeMap[dns] += resp.BytesComplete() // Use BytesComplete() for partial downloads
 
-			fmt.Printf("Downloaded %d bytes using DNS %s\n", resp.BytesComplete(), dns)
-		}(dns)
+		fmt.Printf("Downloaded %d KB using DNS %s\n", resp.BytesComplete()/8_000, dns)
+
 	}
-
-	wg.Wait()
 
 	// Determine which DNS downloaded the most data
 	var maxDNS string
@@ -90,9 +79,8 @@ func CheckWithURL(c *cli.Context) error {
 			maxSize = size
 		}
 	}
-
 	if maxDNS != "" {
-		fmt.Printf("DNS %s downloaded the most data: %d bytes\n", maxDNS, maxSize)
+		fmt.Printf("DNS %s downloaded the most data: %d KB\n", maxDNS, maxSize/8_000)
 	} else {
 		fmt.Println("No DNS server was able to download any data.")
 	}
