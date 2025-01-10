@@ -60,19 +60,14 @@ func CheckWithDNS(c *cli.Context) error {
 			hostname = strings.Split(hostname, "/")[0]
 
 			startTime := time.Now()
-			ips, err := net.LookupIP(hostname)
+			_, err := net.LookupIP(hostname)
 			if err != nil {
 				log.Printf("Failed to resolve hostname %s with DNS %s: %v\n", hostname, dns, err)
 				return
 			}
 			resolutionTime := time.Since(startTime)
-
-			log.Printf("Resolved IPs for %s: %v (DNS: %s)\n", hostname, ips, dns)
-			log.Printf("DNS resolution took: %v\n", resolutionTime)
-
 			resp, err := client.Get(url)
 			if err != nil {
-				log.Printf("Failed to fetch URL %s with DNS %s: %v\n", url, dns, err)
 				return
 			}
 			// Store the time which has been taken to resolve
@@ -83,25 +78,10 @@ func CheckWithDNS(c *cli.Context) error {
 
 			defer resp.Body.Close()
 
-			log.Printf("Response status for %s (DNS: %s): %s\n", url, dns, resp.Status)
+			fmt.Printf("Response status for %s (DNS: %s): %s\n", url, dns, resp.Status)
 		}(dns)
 	}
 	wg.Wait()
-
-	var dns string
-	var minTime time.Duration = 1<<63 - 1
-	for d, t := range dnsResolution {
-		if t < minTime {
-			dns = d
-			minTime = t
-		}
-	}
-
-	if dns != "" {
-		fmt.Printf("DNS %s resolved faster: %s \n", dns, minTime)
-	} else {
-		fmt.Println("No DNS server was able to download any data.")
-	}
 	return nil
 }
 
@@ -114,7 +94,6 @@ func ReadDNSFromFile(filename string) ([]string, error) {
 	return dnsServers, nil
 }
 func DomainValidator(domain string) bool {
-
 	// Regular expression to validate domain names
 	// This regex ensures:
 	// - The domain contains only alphanumeric characters, hyphens, and dots.
@@ -127,7 +106,6 @@ func DomainValidator(domain string) bool {
 	if !match {
 		return false
 	}
-
 	// Additional checks:
 	// 1. The total length of the domain should not exceed 253 characters.
 	if len(domain) > 253 {
