@@ -77,8 +77,8 @@ func CheckWithDNS(c *cli.Context) error {
 			mutex.Unlock()
 
 			defer resp.Body.Close()
-
-			fmt.Printf("Response status for %s (DNS: %s): %s\n", url, dns, resp.Status)
+			code := strings.Split(resp.Status, " ")
+			fmt.Printf("DNS: %s %s\n", dns, code[1])
 		}(dns)
 	}
 	wg.Wait()
@@ -99,8 +99,7 @@ func DomainValidator(domain string) bool {
 	// - The domain contains only alphanumeric characters, hyphens, and dots.
 	// - It does not start or end with a hyphen or dot.
 	// - It has at least one dot.
-	domainRegex := `^(https?:\/\/)([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$`
-
+	domainRegex := `^(https?:\/\/)([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}\/.*$`
 	// Match the domain against the regex
 	match, _ := regexp.MatchString(domainRegex, domain)
 	if !match {
