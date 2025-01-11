@@ -41,22 +41,17 @@ func CheckWithDNS(c *cli.Context) error {
 		fmt.Println(err)
 		return err
 	}
-
 	url = ensureHTTPS(url)
-
 	var wg sync.WaitGroup
 	for _, dns := range dnsList {
 		wg.Add(1)
 		go func(dns string) {
 			defer wg.Done()
-
 			client := ChangeDNS(dns)
-
 			resp, err := client.Get(url)
 			if err != nil {
 				return
 			}
-
 			defer resp.Body.Close()
 			code := strings.Split(resp.Status, " ")
 			fmt.Printf("DNS: %s %s\n", dns, code[1])
@@ -75,13 +70,7 @@ func ReadDNSFromFile(filename string) ([]string, error) {
 	return dnsServers, nil
 }
 func DomainValidator(domain string) bool {
-	// Regular expression to validate domain names
-	// This regex ensures:
-	// - The domain contains only alphanumeric characters, hyphens, and dots.
-	// - It does not start or end with a hyphen or dot.
-	// - It has at least one dot.
 	domainRegex := `^(http[s]?:\/\/)?([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}).*?$`
-	// Match the domain against the regex
 	match, _ := regexp.MatchString(domainRegex, domain)
 	if !match {
 		return false
@@ -91,7 +80,6 @@ func DomainValidator(domain string) bool {
 	if len(domain) > 253 {
 		return false
 	}
-
 	// 2. Each segment between dots should be between 1 and 63 characters long.
 	segments := strings.Split(domain, ".")
 	for _, segment := range segments {
@@ -99,7 +87,6 @@ func DomainValidator(domain string) bool {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -112,21 +99,17 @@ func ensureHTTPS(url string) string {
 		return url
 	}
 	regexHTTP := `^(http)://`
-
 	reHTTP, err := regexp.Compile(regexHTTP)
 	if err != nil {
 		fmt.Println("Error compiling regex:", err)
 		return url
 	}
-
 	if reHTTP.MatchString(url) {
 		url = strings.TrimPrefix(url, "http://")
 	}
-
 	// If the URL doesn't start with http:// or https://, prepend https://
 	if !re.MatchString(url) {
 		url = "https://" + url
 	}
-
 	return url
 }
