@@ -40,7 +40,7 @@ func Run() {
 				Aliases: []string{"docker"},
 				Usage:   "Finds the fastest docker registries for a specific docker image",
 				Description: `Examples:
-    403unlocker --timeout 15 fastdocker gitlab/gitlab-ce:17.0.0-ce.0`,
+    403unlocker fastdocker --timeout 15 gitlab/gitlab-ce:17.0.0-ce.0`,
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:    "timeout",
