@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/403unlocker/403Unlocker-cli/compare/1.0.0...1.0.1) (2025-01-11)
+
+
+### Bug Fixes
+
+* update sub command description ([6fc7b44](https://github.com/403unlocker/403Unlocker-cli/commit/6fc7b44f1c19dbb7d65df25baf20b42a25dd8104))
+
 # 1.0.0 (2025-01-11)
 
 
