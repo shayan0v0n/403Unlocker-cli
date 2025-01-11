@@ -20,12 +20,17 @@ func Run() {
 			{
 				Name:    "check",
 				Aliases: []string{"c"},
-				Usage:   "Checks if the DNS SNI-Proxy can bypass 403 error for an specific domain",
+				Usage:   "Checks if the DNS SNI-Proxy can bypass 403 error for a specific domain",
+				Description: `Examples:
+    403unlocker check https://pkg.go.dev`,
 				Action: func(cCtx *cli.Context) error {
 					if check.DomainValidator(cCtx.Args().First()) {
 						return check.CheckWithDNS(cCtx)
 					} else {
-						fmt.Println("need a valid domain		example: https://pkg.go.dev")
+						err := cli.ShowSubcommandHelp(cCtx)
+						if err != nil {
+							fmt.Println(err)
+						}
 					}
 					return nil
 				},
@@ -33,7 +38,9 @@ func Run() {
 			{
 				Name:    "fastdocker",
 				Aliases: []string{"docker"},
-				Usage:   "Finds the fastest docker registries for an specific docker image",
+				Usage:   "Finds the fastest docker registries for a specific docker image",
+				Description: `Examples:
+    403unlocker fastdocker gitlab/gitlab-ce:17.0.0-ce.0 --timeout 15`,
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:    "timeout",
@@ -46,7 +53,10 @@ func Run() {
 					if docker.DockerImageValidator(cCtx.Args().First()) {
 						return docker.CheckWithDockerImage(cCtx)
 					} else {
-						fmt.Println("need a valid docker image		example: gitlab/gitlab-ce:17.0.0-ce.0")
+						err := cli.ShowSubcommandHelp(cCtx)
+						if err != nil {
+							fmt.Println(err)
+						}
 					}
 					return nil
 				},
@@ -54,7 +64,9 @@ func Run() {
 			{
 				Name:    "bestdns",
 				Aliases: []string{"dns"},
-				Usage:   "Finds the fastest DNS SNI-Proxy for downloading an specific URL",
+				Usage:   "Finds the fastest DNS SNI-Proxy for downloading a specific URL",
+				Description: `Examples:
+    403unlocker bestdns https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm`,
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:    "timeout",
@@ -67,7 +79,10 @@ func Run() {
 					if dns.URLValidator(cCtx.Args().First()) {
 						return dns.CheckWithURL(cCtx)
 					} else {
-						fmt.Println("need a valid URL		example: \"https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm\"")
+						err := cli.ShowSubcommandHelp(cCtx)
+						if err != nil {
+							fmt.Println(err)
+						}
 					}
 					return nil
 				},
