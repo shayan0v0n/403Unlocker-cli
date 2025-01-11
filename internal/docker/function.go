@@ -122,11 +122,11 @@ func CheckWithDockerImage(c *cli.Context) error {
 		defer cancel()
 		size, err := DownloadDockerImage(ctx, imageName, registry, fmt.Sprintf("/tmp/%v", tempDir))
 		if err != nil {
-			fmt.Printf("%s: %v\n", registry, "failed")
+			fmt.Printf("%s: %s%v%s\n", registry, common.Red, "failed", common.Reset)
 			continue
 		}
 		registrySizeMap[registry] += size
-		fmt.Printf("%s downloaded : %v\n", registry, common.FormatDataSize(size))
+		fmt.Printf("%s downloaded : %v/s\n", registry, common.FormatDataSize(size/int64(timeout)))
 	}
 	// Determine which DNS downloaded the most data
 	var maxRegistry string
@@ -138,7 +138,7 @@ func CheckWithDockerImage(c *cli.Context) error {
 		}
 	}
 	if maxRegistry != "" {
-		fmt.Printf("best Registry is %s and downloaded the most data: %v\n", maxRegistry, common.FormatDataSize(maxSize))
+		fmt.Printf("best Registry is %s%s%s and downloaded the most data: %s%v/s%s\n", common.Green, maxRegistry, common.Reset, common.Green, common.FormatDataSize(maxSize/int64(timeout)), common.Reset)
 	} else {
 		fmt.Println("No DNS server was able to download any data.")
 	}

@@ -40,7 +40,7 @@ func Run() {
 				Aliases: []string{"docker"},
 				Usage:   "Finds the fastest docker registries for a specific docker image",
 				Description: `Examples:
-    403unlocker fastdocker gitlab/gitlab-ce:17.0.0-ce.0 --timeout 15`,
+    403unlocker --timeout 15 fastdocker gitlab/gitlab-ce:17.0.0-ce.0`,
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:    "timeout",
@@ -66,7 +66,7 @@ func Run() {
 				Aliases: []string{"dns"},
 				Usage:   "Finds the fastest DNS SNI-Proxy for downloading a specific URL",
 				Description: `Examples:
-    403unlocker bestdns https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm`,
+    403unlocker bestdns --timeout 15 https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm`,
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:    "timeout",

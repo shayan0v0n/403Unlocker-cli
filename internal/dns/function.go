@@ -59,7 +59,11 @@ func CheckWithURL(c *cli.Context) error {
 		resp := client.Do(req)
 		// Update the total size downloaded by this DNS
 		dnsSizeMap[dns] += resp.BytesComplete() // Use BytesComplete() for partial downloads
-		fmt.Printf("%v\tDNS: %s\n", common.FormatDataSize(resp.BytesComplete()), dns)
+		if resp.BytesComplete() == 0 {
+			fmt.Printf("DNS: %s\t%s%v/s%s\n", dns, common.Red, common.FormatDataSize(resp.BytesComplete()/int64(timeout)), common.Reset)
+		} else {
+			fmt.Printf("DNS: %s\t%s/s\n", dns, common.FormatDataSize(resp.BytesComplete()/int64(timeout)))
+		}
 	}
 	// Determine which DNS downloaded the most data
 	var maxDNS string
@@ -71,7 +75,7 @@ func CheckWithURL(c *cli.Context) error {
 		}
 	}
 	if maxDNS != "" {
-		fmt.Printf("best DNS is %s and downloaded the most data: %v\n", maxDNS, common.FormatDataSize(maxSize))
+		fmt.Printf("best DNS is %s%s%s and downloaded the most data: %s%v/s%s\n", common.Green, maxDNS, common.Reset, common.Green, common.FormatDataSize(maxSize/int64(timeout)), common.Reset)
 	} else {
 		fmt.Println("No DNS server was able to download any data.")
 	}

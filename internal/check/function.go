@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/salehborhani/403Unlocker-cli/internal/common"
 	"github.com/urfave/cli/v2"
 )
 
@@ -36,12 +39,14 @@ func ChangeDNS(dns string) *http.Client {
 
 func CheckWithDNS(c *cli.Context) error {
 	url := c.Args().First()
+	url = ensureHTTPS(url)
+
+	fmt.Printf("check: %s\n", url)
 	dnsList, err := ReadDNSFromFile("config/dns.conf")
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	url = ensureHTTPS(url)
 	var wg sync.WaitGroup
 	for _, dns := range dnsList {
 		wg.Add(1)
@@ -54,7 +59,17 @@ func CheckWithDNS(c *cli.Context) error {
 			}
 			defer resp.Body.Close()
 			code := strings.Split(resp.Status, " ")
-			fmt.Printf("DNS: %s %s\n", dns, code[1])
+			statusCodeInt, err := strconv.Atoi(code[0])
+			if err != nil {
+				fmt.Println("Error converting status code:", err)
+				return
+			}
+			if statusCodeInt == http.StatusForbidden {
+				fmt.Printf("DNS: %s %s%s%s\n", dns, common.Red, code[1], common.Reset)
+			} else {
+				fmt.Printf("DNS: %s %s%s%s\n", dns, common.Green, code[1], common.Reset)
+			}
+
 		}(dns)
 	}
 	wg.Wait()
@@ -90,26 +105,32 @@ func DomainValidator(domain string) bool {
 	return true
 }
 
-func ensureHTTPS(url string) string {
+func ensureHTTPS(URL string) string {
 	// Regex to check if the URL starts with https://
-	regex := `^(https)://`
-	re, err := regexp.Compile(regex)
+	regexHTTPS := `^(https)://`
+	reHTTPS, err := regexp.Compile(regexHTTPS)
 	if err != nil {
 		fmt.Println("Error compiling regex:", err)
-		return url
+		return URL
 	}
 	regexHTTP := `^(http)://`
 	reHTTP, err := regexp.Compile(regexHTTP)
 	if err != nil {
 		fmt.Println("Error compiling regex:", err)
-		return url
+		return URL
 	}
-	if reHTTP.MatchString(url) {
-		url = strings.TrimPrefix(url, "http://")
+	if reHTTP.MatchString(URL) {
+		URL = strings.TrimPrefix(URL, "http://")
 	}
-	// If the URL doesn't start with http:// or https://, prepend https://
-	if !re.MatchString(url) {
-		url = "https://" + url
+	if reHTTPS.MatchString(URL) {
+		URL = strings.TrimPrefix(URL, "https://")
 	}
-	return url
+	URL = "https://" + URL
+	// Parse the URL to extract the host
+	parsedURL, err := url.Parse(URL)
+	if err != nil {
+		fmt.Println("Error parsing URL:", err)
+	}
+	// Return only the scheme and host (e.g., https://example.com)
+	return "https://" + parsedURL.Host + "/"
 }

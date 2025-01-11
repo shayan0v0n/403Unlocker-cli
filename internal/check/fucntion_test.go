@@ -81,3 +81,49 @@ func TestDomainValidator(t *testing.T) {
 		})
 	}
 }
+
+func TestEnsureHTTPS(t *testing.T) {
+	tests := []struct {
+		name     string
+		url      string
+		expected string
+	}{
+		{
+			name:     "URL with http scheme",
+			url:      "http://example.com",
+			expected: "https://example.com/",
+		},
+		{
+			name:     "URL with https scheme",
+			url:      "https://example.com",
+			expected: "https://example.com/",
+		},
+		{
+			name:     "URL without scheme",
+			url:      "example.com",
+			expected: "https://example.com/",
+		},
+		{
+			name:     "URL with path and query",
+			url:      "http://example.com/path?query=123",
+			expected: "https://example.com/",
+		},
+		{
+			name:     "URL with subdomain",
+			url:      "http://sub.example.com",
+			expected: "https://sub.example.com/",
+		},
+		{
+			name:     "URL with double slashes",
+			url:      "http://example.com//path",
+			expected: "https://example.com/",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ensureHTTPS(tt.url)
+			assert.Equal(t, tt.expected, result, "Test case: %s", tt.name)
+		})
+	}
+}
