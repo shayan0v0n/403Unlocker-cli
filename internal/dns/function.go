@@ -37,35 +37,46 @@ func CheckWithURL(c *cli.Context) error {
 		fmt.Println("Error reading DNS list:", err)
 		return err
 	}
-	// Map to store the total size downloaded by each DNS
+
 	dnsSizeMap := make(map[string]int64)
-	fmt.Println("Timeout:", timeout)
-	fmt.Println("URL: ", fileToDownload)
+	fmt.Printf("\nTimeout: %d seconds\n", timeout)
+	fmt.Printf("URL: %s\n\n", fileToDownload)
+
+	// Print table header
+	fmt.Println("+--------------------+----------------+")
+	fmt.Printf("| %-18s | %-14s |\n", "DNS Server", "Download Speed")
+	fmt.Println("+--------------------+----------------+")
+
 	tempDir := time.Now().UnixMilli()
 	for _, dns := range dnsList {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 		defer cancel()
-		// Create a custom HTTP client with the specified DNS
+
 		clientWithCustomDNS := check.ChangeDNS(dns)
 		client := grab.NewClient()
 		client.HTTPClient = clientWithCustomDNS
-		// Create a new download request
+
 		req, err := grab.NewRequest(fmt.Sprintf("/tmp/%v", tempDir), fileToDownload)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating request for DNS %s: %v\n", dns, err)
 		}
 		req = req.WithContext(ctx)
-		// Start the download
+
 		resp := client.Do(req)
-		// Update the total size downloaded by this DNS
-		dnsSizeMap[dns] += resp.BytesComplete() // Use BytesComplete() for partial downloads
+		dnsSizeMap[dns] = resp.BytesComplete()
+
+		speed := common.FormatDataSize(resp.BytesComplete() / int64(timeout))
 		if resp.BytesComplete() == 0 {
-			fmt.Printf("DNS: %s\t%s%v/s%s\n", dns, common.Red, common.FormatDataSize(resp.BytesComplete()/int64(timeout)), common.Reset)
+			fmt.Printf("| %-18s | %s%-14s%s |\n", dns, common.Red, speed+"/s", common.Reset)
 		} else {
-			fmt.Printf("DNS: %s\t%s/s\n", dns, common.FormatDataSize(resp.BytesComplete()/int64(timeout)))
+			fmt.Printf("| %-18s | %-14s |\n", dns, speed+"/s")
 		}
 	}
-	// Determine which DNS downloaded the most data
+
+	// Print table footer
+	fmt.Println("+--------------------+----------------+")
+
+	// Find and display the best DNS
 	var maxDNS string
 	var maxSize int64
 	for dns, size := range dnsSizeMap {
@@ -74,11 +85,17 @@ func CheckWithURL(c *cli.Context) error {
 			maxSize = size
 		}
 	}
+
+	fmt.Println() // Add a blank line for separation
 	if maxDNS != "" {
-		fmt.Printf("best DNS is %s%s%s and downloaded the most data: %s%v/s%s\n", common.Green, maxDNS, common.Reset, common.Green, common.FormatDataSize(maxSize/int64(timeout)), common.Reset)
+		bestSpeed := common.FormatDataSize(maxSize / int64(timeout))
+		fmt.Printf("Best DNS: %s%s%s (%s%s/s%s)\n",
+			common.Green, maxDNS, common.Reset,
+			common.Green, bestSpeed, common.Reset)
 	} else {
 		fmt.Println("No DNS server was able to download any data.")
 	}
+
 	os.RemoveAll(fmt.Sprintf("/tmp/%v", tempDir))
 	return nil
 }
