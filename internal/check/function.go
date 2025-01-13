@@ -70,11 +70,12 @@ func CheckWithDNS(c *cli.Context) error {
 			}
 
 			// Format table row with colored status
-			if statusCodeInt == http.StatusForbidden {
+			if statusCodeInt != http.StatusOK {
 				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, code[1], common.Reset)
 			} else {
 				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Green, code[1], common.Reset)
 			}
+
 		}(dns)
 	}
 	wg.Wait()
