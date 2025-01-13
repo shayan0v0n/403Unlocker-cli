@@ -104,8 +104,9 @@ func CheckWithDockerImage(c *cli.Context) error {
 	timeout := c.Int("timeout")
 	imageName := c.Args().First()
 	tempDir := time.Now().UnixMilli()
-	fmt.Println("Timeout:", timeout)
-	fmt.Println("Docker Image: ", imageName)
+
+	fmt.Printf("\nTimeout: %d seconds\n", timeout)
+	fmt.Printf("Docker Image: %s\n\n", imageName)
 
 	if imageName == "" {
 		return fmt.Errorf("image name cannot be empty")
@@ -117,31 +118,61 @@ func CheckWithDockerImage(c *cli.Context) error {
 		return err
 	}
 
+	// Find the longest registry name first
+	maxLength := 0
+	for _, registry := range registryList {
+		if len(registry) > maxLength {
+			maxLength = len(registry)
+		}
+	}
+
+	// Create table formatting based on longest name
+	borderLine := "+" + strings.Repeat("-", maxLength+2) + "+------------------+"
+	format := "| %-" + fmt.Sprintf("%d", maxLength) + "s | %-16s |\n"
+
+	// Print table header
+	fmt.Println(borderLine)
+	fmt.Printf(format, "Registry", "Download Speed")
+	fmt.Println(borderLine)
+
 	for _, registry := range registryList {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 		defer cancel()
+
 		size, err := DownloadDockerImage(ctx, imageName, registry, fmt.Sprintf("/tmp/%v", tempDir))
 		if err != nil {
-			fmt.Printf("%s: %s%v%s\n", registry, common.Red, "failed", common.Reset)
+			fmt.Printf("| %-*s | %s%-16s%s |\n",
+				maxLength, registry,
+				common.Red, "failed", common.Reset)
 			continue
 		}
+
 		registrySizeMap[registry] += size
-		fmt.Printf("%s downloaded : %v/s\n", registry, common.FormatDataSize(size/int64(timeout)))
+		speed := common.FormatDataSize(size / int64(timeout))
+		fmt.Printf(format, registry, speed+"/s")
 	}
-	// Determine which DNS downloaded the most data
+
+	fmt.Println(borderLine)
+
 	var maxRegistry string
 	var maxSize int64
-	for dns, size := range registrySizeMap {
+	for registry, size := range registrySizeMap {
 		if size > maxSize {
-			maxRegistry = dns
+			maxRegistry = registry
 			maxSize = size
 		}
 	}
+
+	fmt.Println()
 	if maxRegistry != "" {
-		fmt.Printf("best Registry is %s%s%s and downloaded the most data: %s%v/s%s\n", common.Green, maxRegistry, common.Reset, common.Green, common.FormatDataSize(maxSize/int64(timeout)), common.Reset)
+		bestSpeed := common.FormatDataSize(maxSize / int64(timeout))
+		fmt.Printf("Best Registry: %s%s%s (%s%s/s%s)\n",
+			common.Green, maxRegistry, common.Reset,
+			common.Green, bestSpeed, common.Reset)
 	} else {
-		fmt.Println("No DNS server was able to download any data.")
+		fmt.Println("No registry was able to download any data.")
 	}
+
 	os.RemoveAll(fmt.Sprintf("/tmp/%v", tempDir))
 	return nil
 }

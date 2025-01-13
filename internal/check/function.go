@@ -41,7 +41,11 @@ func CheckWithDNS(c *cli.Context) error {
 	url := c.Args().First()
 	url = ensureHTTPS(url)
 
-	fmt.Printf("check: %s\n", url)
+	// Print header
+	fmt.Println("\n+--------------------+------------+")
+	fmt.Printf("| %-18s | %-10s |\n", "DNS Server", "Status")
+	fmt.Println("+--------------------+------------+")
+
 	dnsList, err := ReadDNSFromFile("config/dns.conf")
 	if err != nil {
 		fmt.Println(err)
@@ -64,15 +68,20 @@ func CheckWithDNS(c *cli.Context) error {
 				fmt.Println("Error converting status code:", err)
 				return
 			}
-			if statusCodeInt == http.StatusForbidden {
-				fmt.Printf("DNS: %s %s%s%s\n", dns, common.Red, code[1], common.Reset)
+
+			// Format table row with colored status
+			if statusCodeInt != http.StatusOK {
+				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, code[1], common.Reset)
 			} else {
-				fmt.Printf("DNS: %s %s%s%s\n", dns, common.Green, code[1], common.Reset)
+				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Green, code[1], common.Reset)
 			}
 
 		}(dns)
 	}
 	wg.Wait()
+
+	// Print footer
+	fmt.Println("+--------------------+------------+")
 	return nil
 }
 
