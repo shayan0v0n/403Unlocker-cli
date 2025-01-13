@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/403unlocker/403Unlocker-cli/compare/1.0.1...1.1.0) (2025-01-13)
+
+
+### Bug Fixes
+
+* change unavailable status color from green to red ([29a9526](https://github.com/403unlocker/403Unlocker-cli/commit/29a9526599bdd097f565b3d8cf32498ac3fce3d4))
+
+
+### Features
+
+* **output:** change output logs format to table formatting ([e0f2926](https://github.com/403unlocker/403Unlocker-cli/commit/e0f29265856ba2c7447438e68bc63a98a23a0405))
+
 ## [1.0.1](https://github.com/403unlocker/403Unlocker-cli/compare/1.0.0...1.0.1) (2025-01-11)
 
 
