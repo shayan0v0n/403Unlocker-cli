@@ -17,7 +17,7 @@
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/403unlocker/403Unlocker-cli.git
+   git clone --depth=1 https://github.com/403unlocker/403Unlocker-cli.git
    cd 403Unlocker-cli
    ```
 2. Install the project:
