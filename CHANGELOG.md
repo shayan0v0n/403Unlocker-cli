@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/403unlocker/403Unlocker-cli/compare/1.1.0...1.1.1) (2025-01-14)
+
+
+### Bug Fixes
+
+* delete binary file ([3166d43](https://github.com/403unlocker/403Unlocker-cli/commit/3166d436c6422f629a1b10d2fddda8b72ac6092e))
+
 # [1.1.0](https://github.com/403unlocker/403Unlocker-cli/compare/1.0.1...1.1.0) (2025-01-13)
 
 
