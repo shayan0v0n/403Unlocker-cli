@@ -1,3 +1,11 @@
+# [1.2.0](https://github.com/403unlocker/403Unlocker-cli/compare/1.1.1...1.2.0) (2025-01-15)
+
+
+### Features
+
+* add download config file from binary ([08db890](https://github.com/403unlocker/403Unlocker-cli/commit/08db890b11eec429e277a03da45382c20bfa4342))
+* Add reading config file from home dir ([63f9ff4](https://github.com/403unlocker/403Unlocker-cli/commit/63f9ff41bae9cffa893d70e74d666d7c7053512f))
+
 ## [1.1.1](https://github.com/403unlocker/403Unlocker-cli/compare/1.1.0...1.1.1) (2025-01-14)
 
 
