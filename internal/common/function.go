@@ -1,16 +1,31 @@
 package common
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+)
 
-var Reset = "\033[0m"
-var Red = "\033[31m"
-var Green = "\033[32m"
-var Yellow = "\033[33m"
-var Blue = "\033[34m"
-var Magenta = "\033[35m"
-var Cyan = "\033[36m"
-var Gray = "\033[37m"
-var White = "\033[97m"
+const (
+	// Color
+	Reset   = "\033[0m"
+	Red     = "\033[31m"
+	Green   = "\033[32m"
+	Yellow  = "\033[33m"
+	Blue    = "\033[34m"
+	Magenta = "\033[35m"
+	Cyan    = "\033[36m"
+	Gray    = "\033[37m"
+	White   = "\033[97m"
+
+	// DNS config
+	DNS_CONFIG_FILE    = ".config/403unlocker/dns.conf"
+	DOCKER_CONFIG_FILE = ".config/403unlocker/dockerRegistry.conf"
+	DNS_CONFIG_URL     = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dns.conf"
+	DOCKER_CONFIG_URL  = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dockerRegistry.conf"
+)
 
 // FormatDataSize converts the size in bytes to a human-readable string in KB, MB, or GB.
 func FormatDataSize(bytes int64) string {
@@ -30,4 +45,52 @@ func FormatDataSize(bytes int64) string {
 	default:
 		return fmt.Sprintf("%d Bytes", bytes)
 	}
+}
+
+func DownloadConfigFile(url, path string) error {
+
+	homeDir := os.Getenv("HOME")
+	if homeDir == "" {
+		fmt.Println("HOME environment variable not set")
+		os.Exit(1)
+	}
+	filePath := homeDir + "/" + path
+
+	dir := filepath.Dir(filePath)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		fmt.Printf("Error creating directory: %v\n", err)
+		return err
+	}
+
+	out, err := os.Create(filePath)
+
+	if err != nil {
+		fmt.Println(err)
+
+		return err
+	}
+	defer out.Close()
+
+	if err != nil {
+		fmt.Println("Could not download config file.")
+		return err
+	}
+
+	resp, err := http.Get(url)
+
+	if err != nil {
+		fmt.Println("Could not get the response: ", err)
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	_, err = io.Copy(out, resp.Body)
+
+	if err != nil {
+		fmt.Println("Could not copy content file")
+		return err
+	}
+
+	return nil
 }
