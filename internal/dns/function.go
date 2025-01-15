@@ -32,10 +32,19 @@ func URLValidator(URL string) bool {
 func CheckWithURL(c *cli.Context) error {
 	fileToDownload := c.Args().First()
 	timeout := c.Int("timeout")
+
 	dnsList, err := check.ReadDNSFromFile(common.DNS_CONFIG_FILE)
 	if err != nil {
-		fmt.Println("Error reading DNS list:", err)
-		return err
+		err = common.DownloadConfigFile(common.DNS_CONFIG_URL, common.DNS_CONFIG_FILE)
+		if err != nil {
+			return err
+		}
+		dnsList, err = check.ReadDNSFromFile(common.DNS_CONFIG_FILE)
+
+		if err != nil {
+			fmt.Println("Error reading DNS list:", err)
+			return err
+		}
 	}
 
 	dnsSizeMap := make(map[string]int64)

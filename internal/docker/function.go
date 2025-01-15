@@ -114,8 +114,17 @@ func CheckWithDockerImage(c *cli.Context) error {
 
 	registryList, err := check.ReadDNSFromFile(common.DOCKER_CONFIG_FILE)
 	if err != nil {
-		log.Printf("Error reading registry list: %v", err)
-		return err
+		err = common.DownloadConfigFile(common.DOCKER_CONFIG_URL, common.DOCKER_CONFIG_FILE)
+		if err != nil {
+			return err
+		}
+
+		registryList, err = check.ReadDNSFromFile(common.DOCKER_CONFIG_FILE)
+		if err != nil {
+			log.Printf("Error reading registry list: %v", err)
+			return err
+		}
+
 	}
 
 	// Find the longest registry name first

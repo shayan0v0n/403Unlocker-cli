@@ -41,6 +41,8 @@ func CheckWithDNS(c *cli.Context) error {
 	url := c.Args().First()
 	url = ensureHTTPS(url)
 
+	fmt.Println("URL: ", url)
+
 	// Print header
 	fmt.Println("\n+--------------------+------------+")
 	fmt.Printf("| %-18s | %-10s |\n", "DNS Server", "Status")
@@ -48,9 +50,19 @@ func CheckWithDNS(c *cli.Context) error {
 
 	dnsList, err := ReadDNSFromFile(common.DNS_CONFIG_FILE)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		err = common.DownloadConfigFile(common.DNS_CONFIG_URL, common.DNS_CONFIG_FILE)
+		if err != nil {
+			return err
+		}
+
+		dnsList, err = ReadDNSFromFile(common.DNS_CONFIG_FILE)
+
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
 	}
+
 	var wg sync.WaitGroup
 	for _, dns := range dnsList {
 		wg.Add(1)
