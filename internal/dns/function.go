@@ -2,10 +2,13 @@ package dns
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,8 +34,8 @@ func URLValidator(URL string) bool {
 	return true
 }
 
-func CheckAndCacheDNS(fileToDownload string) error {
-	cacheFile := common.DNS_CONFIG_FILE_CACHED
+func CheckAndCacheDNS(url string) error {
+	cacheFile := common.CHECKED_DNS_CONFIG_FILE
 
 	dnsList, err := common.ReadDNSFromFile(common.DNS_CONFIG_FILE)
 	if err != nil {
@@ -55,45 +58,49 @@ func CheckAndCacheDNS(fileToDownload string) error {
 
 	var validDNSList []string
 	var wg sync.WaitGroup
-	var mu sync.Mutex
+	var mu sync.Mutex // To synchronize access to validDNSList
 
 	for _, dns := range dnsList {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Timeout of 10 seconds
 		wg.Add(1)
-		go func(dns string) {
+		go func(dns string, ctx context.Context, cancel context.CancelFunc) {
 			defer wg.Done()
-
-			// Set a 10-second timeout for the DNS lookup
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
 			client := common.ChangeDNS(dns)
-			req, err := http.NewRequestWithContext(ctx, "GET", fileToDownload, nil)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 			if err != nil {
-				mu.Lock()
-				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Error", common.Reset)
-				mu.Unlock()
+				fmt.Printf("Error creating request for DNS %s: %v\n", dns, err)
 				return
 			}
 
 			resp, err := client.Do(req)
 			if err != nil {
-				mu.Lock()
-				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Failed", common.Reset)
-				mu.Unlock()
+				if errors.Is(err, context.DeadlineExceeded) {
+					fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Timeout", common.Reset)
+				} else {
+					fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Error", common.Reset)
+				}
 				return
 			}
 			defer resp.Body.Close()
 
-			statusCode := resp.StatusCode
-			mu.Lock()
-			if statusCode == http.StatusOK {
-				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Green, "OK", common.Reset)
-				validDNSList = append(validDNSList, dns)
-			} else {
-				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Error", common.Reset)
+			code := strings.Split(resp.Status, " ")
+			statusCodeInt, err := strconv.Atoi(code[0])
+			if err != nil {
+				fmt.Println("Error converting status code:", err)
+				return
 			}
-			mu.Unlock()
-		}(dns)
+
+			if statusCodeInt == http.StatusOK {
+				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Green, code[1], common.Reset)
+				mu.Lock()
+				validDNSList = append(validDNSList, dns)
+				mu.Unlock()
+			} else {
+				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, code[1], common.Reset)
+			}
+		}(dns, ctx, cancel)
 	}
 
 	wg.Wait()
@@ -119,14 +126,13 @@ func CheckAndCacheDNS(fileToDownload string) error {
 func CheckWithURL(c *cli.Context) error {
 	fileToDownload := c.Args().First()
 
-	// Determine the DNS list file based on the presence of the `--check` flag
 	var dnsFile string
 	if c.Bool("check") {
-		err := CheckAndCacheDNS(fileToDownload) // Update cached DNS if `--check` is used
+		err := CheckAndCacheDNS(fileToDownload)
 		if err != nil {
 			return err
 		}
-		dnsFile = common.DNS_CONFIG_FILE_CACHED
+		dnsFile = common.CHECKED_DNS_CONFIG_FILE
 	} else {
 		dnsFile = common.DNS_CONFIG_FILE
 	}

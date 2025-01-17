@@ -24,11 +24,11 @@ const (
 	White   = "\033[97m"
 
 	// DNS config
-	DNS_CONFIG_FILE        = ".config/403unlocker/dns.conf"
-	DNS_CONFIG_FILE_CACHED = ".config/403unlocker/dns_cached.conf"
-	DOCKER_CONFIG_FILE     = ".config/403unlocker/dockerRegistry.conf"
-	DNS_CONFIG_URL         = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dns.conf"
-	DOCKER_CONFIG_URL      = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dockerRegistry.conf"
+	DNS_CONFIG_FILE         = ".config/403unlocker/dns.conf"
+	CHECKED_DNS_CONFIG_FILE = ".config/403unlocker/checked_dns.conf"
+	DOCKER_CONFIG_FILE      = ".config/403unlocker/dockerRegistry.conf"
+	DNS_CONFIG_URL          = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dns.conf"
+	DOCKER_CONFIG_URL       = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dockerRegistry.conf"
 )
 
 // FormatDataSize converts the size in bytes to a human-readable string in KB, MB, or GB.

@@ -24,7 +24,7 @@ func CheckWithDNS(c *cli.Context) error {
 	fmt.Printf("| %-18s | %-10s |\n", "DNS Server", "Status")
 	fmt.Println("+--------------------+------------+")
 
-	dnsList, err := common.ReadDNSFromFile(common.DNS_CONFIG_FILE_CACHED)
+	dnsList, err := common.ReadDNSFromFile(common.DNS_CONFIG_FILE)
 	if err != nil {
 		err = common.DownloadConfigFile(common.DNS_CONFIG_URL, common.DNS_CONFIG_FILE)
 		if err != nil {
