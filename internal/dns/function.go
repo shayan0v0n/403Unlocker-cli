@@ -2,7 +2,6 @@ package dns
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -58,49 +57,49 @@ func CheckAndCacheDNS(url string) error {
 
 	var validDNSList []string
 	var wg sync.WaitGroup
-	var mu sync.Mutex // To synchronize access to validDNSList
+	var mu sync.Mutex
 
 	for _, dns := range dnsList {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Timeout of 10 seconds
 		wg.Add(1)
-		go func(dns string, ctx context.Context, cancel context.CancelFunc) {
+		go func(dns string) {
 			defer wg.Done()
-			defer cancel()
 
+			// Change DNS for the HTTP client
 			client := common.ChangeDNS(dns)
-			req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-			if err != nil {
-				fmt.Printf("Error creating request for DNS %s: %v\n", dns, err)
-				return
-			}
 
-			resp, err := client.Do(req)
+			// Perform the GET request
+			resp, err := client.Get(url)
 			if err != nil {
-				if errors.Is(err, context.DeadlineExceeded) {
-					fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Timeout", common.Reset)
-				} else {
-					fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Error", common.Reset)
-				}
+				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Error", common.Reset)
 				return
 			}
 			defer resp.Body.Close()
 
-			code := strings.Split(resp.Status, " ")
-			statusCodeInt, err := strconv.Atoi(code[0])
-			if err != nil {
-				fmt.Println("Error converting status code:", err)
+			// Parse the status code
+			codeParts := strings.Split(resp.Status, " ")
+			if len(codeParts) < 2 {
+				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Invalid", common.Reset)
 				return
 			}
 
-			if statusCodeInt == http.StatusOK {
-				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Green, code[1], common.Reset)
+			statusCode, err := strconv.Atoi(codeParts[0])
+			if err != nil {
+				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, "Error", common.Reset)
+				return
+			}
+
+			// Output the status with appropriate color
+			statusText := codeParts[1]
+
+			if statusCode == http.StatusOK {
 				mu.Lock()
 				validDNSList = append(validDNSList, dns)
 				mu.Unlock()
+				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Green, statusText, common.Reset)
 			} else {
-				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, code[1], common.Reset)
+				fmt.Printf("| %-18s | %s%-10s%s |\n", dns, common.Red, statusText, common.Reset)
 			}
-		}(dns, ctx, cancel)
+		}(dns)
 	}
 
 	wg.Wait()
