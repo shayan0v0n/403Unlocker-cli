@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/cavaliergopher/grab/v3"
@@ -57,31 +58,37 @@ func CheckWithURL(c *cli.Context) error {
 	fmt.Println("+--------------------+----------------+")
 
 	tempDir := time.Now().UnixMilli()
+	var wg sync.WaitGroup
 	for _, dns := range dnsList {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-		defer cancel()
+		wg.Add(1)
+		go func(dns string) {
+			defer wg.Done()
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+			defer cancel()
 
-		clientWithCustomDNS := check.ChangeDNS(dns)
-		client := grab.NewClient()
-		client.HTTPClient = clientWithCustomDNS
+			clientWithCustomDNS := check.ChangeDNS(dns)
+			client := grab.NewClient()
+			client.HTTPClient = clientWithCustomDNS
 
-		req, err := grab.NewRequest(fmt.Sprintf("/tmp/%v", tempDir), fileToDownload)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating request for DNS %s: %v\n", dns, err)
-		}
-		req = req.WithContext(ctx)
+			req, err := grab.NewRequest(fmt.Sprintf("/tmp/%v", tempDir), fileToDownload)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error creating request for DNS %s: %v\n", dns, err)
+			}
+			req = req.WithContext(ctx)
 
-		resp := client.Do(req)
-		dnsSizeMap[dns] = resp.BytesComplete()
+			resp := client.Do(req)
+			dnsSizeMap[dns] = resp.BytesComplete()
 
-		speed := common.FormatDataSize(resp.BytesComplete() / int64(timeout))
-		if resp.BytesComplete() == 0 {
-			fmt.Printf("| %-18s | %s%-14s%s |\n", dns, common.Red, speed+"/s", common.Reset)
-		} else {
-			fmt.Printf("| %-18s | %-14s |\n", dns, speed+"/s")
-		}
+			speed := common.FormatDataSize(resp.BytesComplete() / int64(timeout))
+			if resp.BytesComplete() == 0 {
+				fmt.Printf("| %-18s | %s%-14s%s |\n", dns, common.Red, speed+"/s", common.Reset)
+			} else {
+				fmt.Printf("| %-18s | %-14s |\n", dns, speed+"/s")
+			}
+		}(dns)
 	}
 
+	wg.Wait()
 	// Print table footer
 	fmt.Println("+--------------------+----------------+")
 
