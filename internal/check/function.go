@@ -1,12 +1,9 @@
 package check
 
 import (
-	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,27 +12,6 @@ import (
 	"github.com/salehborhani/403Unlocker-cli/internal/common"
 	"github.com/urfave/cli/v2"
 )
-
-func ChangeDNS(dns string) *http.Client {
-	dialer := &net.Dialer{}
-	customResolver := &net.Resolver{
-		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			dnsServer := fmt.Sprintf("%s:53", dns)
-			return dialer.DialContext(ctx, "udp", dnsServer)
-		},
-	}
-	customDialer := &net.Dialer{
-		Resolver: customResolver,
-	}
-	transport := &http.Transport{
-		DialContext: customDialer.DialContext,
-	}
-	client := &http.Client{
-		Transport: transport,
-	}
-	return client
-}
 
 func CheckWithDNS(c *cli.Context) error {
 	url := c.Args().First()
@@ -48,14 +24,14 @@ func CheckWithDNS(c *cli.Context) error {
 	fmt.Printf("| %-18s | %-10s |\n", "DNS Server", "Status")
 	fmt.Println("+--------------------+------------+")
 
-	dnsList, err := ReadDNSFromFile(common.DNS_CONFIG_FILE)
+	dnsList, err := common.ReadDNSFromFile(common.DNS_CONFIG_FILE_CACHED)
 	if err != nil {
 		err = common.DownloadConfigFile(common.DNS_CONFIG_URL, common.DNS_CONFIG_FILE)
 		if err != nil {
 			return err
 		}
 
-		dnsList, err = ReadDNSFromFile(common.DNS_CONFIG_FILE)
+		dnsList, err = common.ReadDNSFromFile(common.DNS_CONFIG_FILE)
 
 		if err != nil {
 			fmt.Println(err)
@@ -68,7 +44,7 @@ func CheckWithDNS(c *cli.Context) error {
 		wg.Add(1)
 		go func(dns string) {
 			defer wg.Done()
-			client := ChangeDNS(dns)
+			client := common.ChangeDNS(dns)
 			resp, err := client.Get(url)
 			if err != nil {
 				return
@@ -97,20 +73,6 @@ func CheckWithDNS(c *cli.Context) error {
 	return nil
 }
 
-func ReadDNSFromFile(filename string) ([]string, error) {
-	homeDir := os.Getenv("HOME")
-	if homeDir == "" {
-		fmt.Println("HOME environment variable not set")
-		os.Exit(1)
-	}
-	filename = homeDir + "/" + filename
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	dnsServers := strings.Fields(string(data))
-	return dnsServers, nil
-}
 func DomainValidator(domain string) bool {
 	domainRegex := `^(http[s]?:\/\/)?([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}).*?$`
 	match, _ := regexp.MatchString(domainRegex, domain)

@@ -66,25 +66,36 @@ func Run() {
 				Aliases: []string{"dns"},
 				Usage:   "Finds the fastest DNS SNI-Proxy for downloading a specific URL",
 				Description: `Examples:
-    403unlocker bestdns --timeout 15 https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm`,
+			403unlocker bestdns --timeout 15 https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm`,
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:    "timeout",
-						Usage:   "Sets timeout",
+						Usage:   "Sets timeout in seconds",
 						Value:   10,
 						Aliases: []string{"t"},
 					},
+					&cli.BoolFlag{
+						Name:    "check",
+						Usage:   "Update the DNS cache before running the check",
+						Aliases: []string{"c"},
+					},
 				},
 				Action: func(cCtx *cli.Context) error {
-					if dns.URLValidator(cCtx.Args().First()) {
-						return dns.CheckWithURL(cCtx)
-					} else {
-						err := cli.ShowSubcommandHelp(cCtx)
-						if err != nil {
-							fmt.Println(err)
-						}
+					// Validate the URL argument
+					if cCtx.Args().Len() < 1 {
+						fmt.Println("Error: URL is required")
+						return cli.ShowSubcommandHelp(cCtx)
 					}
-					return nil
+
+					// Validate the provided URL
+					url := cCtx.Args().First()
+					if !dns.URLValidator(url) {
+						fmt.Println("Error: Invalid URL")
+						return cli.ShowSubcommandHelp(cCtx)
+					}
+
+					// Call CheckWithURL with the current context
+					return dns.CheckWithURL(cCtx)
 				},
 			},
 		},

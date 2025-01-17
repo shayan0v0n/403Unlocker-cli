@@ -17,7 +17,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
-	"github.com/salehborhani/403Unlocker-cli/internal/check"
 	"github.com/salehborhani/403Unlocker-cli/internal/common"
 	"github.com/urfave/cli/v2"
 )
@@ -112,14 +111,14 @@ func CheckWithDockerImage(c *cli.Context) error {
 		return fmt.Errorf("image name cannot be empty")
 	}
 
-	registryList, err := check.ReadDNSFromFile(common.DOCKER_CONFIG_FILE)
+	registryList, err := common.ReadDNSFromFile(common.DOCKER_CONFIG_FILE)
 	if err != nil {
 		err = common.DownloadConfigFile(common.DOCKER_CONFIG_URL, common.DOCKER_CONFIG_FILE)
 		if err != nil {
 			return err
 		}
 
-		registryList, err = check.ReadDNSFromFile(common.DOCKER_CONFIG_FILE)
+		registryList, err = common.ReadDNSFromFile(common.DOCKER_CONFIG_FILE)
 		if err != nil {
 			log.Printf("Error reading registry list: %v", err)
 			return err
