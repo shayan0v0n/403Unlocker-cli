@@ -122,7 +122,10 @@ func CheckWithURL(c *cli.Context) error {
 	// Determine the DNS list file based on the presence of the `--check` flag
 	var dnsFile string
 	if c.Bool("check") {
-		CheckAndCacheDNS(fileToDownload) // Update cached DNS if `--check` is used
+		err := CheckAndCacheDNS(fileToDownload) // Update cached DNS if `--check` is used
+		if err != nil {
+			return err
+		}
 		dnsFile = common.DNS_CONFIG_FILE_CACHED
 	} else {
 		dnsFile = common.DNS_CONFIG_FILE
