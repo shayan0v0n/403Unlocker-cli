@@ -1,11 +1,14 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -21,10 +24,11 @@ const (
 	White   = "\033[97m"
 
 	// DNS config
-	DNS_CONFIG_FILE    = ".config/403unlocker/dns.conf"
-	DOCKER_CONFIG_FILE = ".config/403unlocker/dockerRegistry.conf"
-	DNS_CONFIG_URL     = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dns.conf"
-	DOCKER_CONFIG_URL  = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dockerRegistry.conf"
+	DNS_CONFIG_FILE         = ".config/403unlocker/dns.conf"
+	CHECKED_DNS_CONFIG_FILE = ".config/403unlocker/checked_dns.conf"
+	DOCKER_CONFIG_FILE      = ".config/403unlocker/dockerRegistry.conf"
+	DNS_CONFIG_URL          = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dns.conf"
+	DOCKER_CONFIG_URL       = "https://raw.githubusercontent.com/403unlocker/403Unlocker-cli/refs/heads/main/config/dockerRegistry.conf"
 )
 
 // FormatDataSize converts the size in bytes to a human-readable string in KB, MB, or GB.
@@ -93,4 +97,70 @@ func DownloadConfigFile(url, path string) error {
 	}
 
 	return nil
+}
+
+func WriteDNSToFile(filename string, dnsList []string) error {
+	homeDir := os.Getenv("HOME")
+	if homeDir == "" {
+		fmt.Println("HOME environment variable not set")
+		os.Exit(1)
+	}
+
+	filename = homeDir + "/" + filename
+
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		file, err := os.Create(filename)
+		if err != nil {
+			fmt.Printf("Error creating file %s: %v\n", filename, err)
+			return err
+		}
+		file.Close()
+	}
+
+	content := strings.Join(dnsList, " ")
+
+	err = os.WriteFile(filename, []byte(content), 0644)
+	if err != nil {
+		fmt.Printf("Error writing to file %s: %v\n", filename, err)
+		return err
+	}
+
+	return nil
+}
+
+func ReadDNSFromFile(filename string) ([]string, error) {
+	homeDir := os.Getenv("HOME")
+	if homeDir == "" {
+		fmt.Println("HOME environment variable not set")
+		os.Exit(1)
+	}
+	filename = homeDir + "/" + filename
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	dnsServers := strings.Fields(string(data))
+	return dnsServers, nil
+}
+
+func ChangeDNS(dns string) *http.Client {
+	dialer := &net.Dialer{}
+	customResolver := &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			dnsServer := fmt.Sprintf("%s:53", dns)
+			return dialer.DialContext(ctx, "udp", dnsServer)
+		},
+	}
+	customDialer := &net.Dialer{
+		Resolver: customResolver,
+	}
+	transport := &http.Transport{
+		DialContext: customDialer.DialContext,
+	}
+	client := &http.Client{
+		Transport: transport,
+	}
+	return client
 }
